@@ -1,0 +1,82 @@
+# include<sys/types.h>
+# include<sys/ipc.h>
+# include<sys/shm.h>
+
+int main()
+{
+    int a[10]={1,2,3,4,5,6,7,8,9,10};
+    int sum=0,i;
+    key_t key=0X1000;
+    int *ptr;
+    int id,shmid,shmid1;
+
+    int pfork(int);
+    void pjoin(int ,int);
+    
+    shmid=shmget(key,4,IPC_CREAT|0666);
+    
+    if(shmid < 0)
+        printf("ERROR\n");
+    else
+        printf("Shmid Is %d\n",shmid);
+    
+    shmid1=shmget(key,4,IPC_CREAT|0666);
+
+    printf("Shmid1=%d\n",shmid1);
+
+    ptr=shmat(shmid,0,0);
+
+    *ptr=0;    
+    id=pfork(2);
+
+    if(id==0)
+    {
+        for(i=0;i<10;i+=2)
+        {
+            sum=sum+a[i];
+        }
+        printf("Sum in parent is %d\n",sum);
+    }
+    if(id==1)
+    {
+        for(i=1;i<10;i+=2)
+        {
+            *ptr=*ptr+a[i];
+        }
+        printf("Sum in child is %d\n",*ptr);
+    }
+
+    pjoin(2,id);
+
+    sum=sum+*ptr;
+    printf("the sum is %d\n",sum);
+    return 0;
+}
+
+int pfork(int x)
+{
+    int j;
+    for(j=1;j<x;j++)
+    {
+        if(fork()==0)
+            return j;
+    }
+    return 0;
+}
+
+void pjoin(int x,int id)
+{
+    int j;
+
+    if(id==0)
+    {
+        for(j=1;j<x;j++)
+        {
+            wait(0);
+        }    
+    }
+    else
+    {
+        exit(0);
+    }
+}
